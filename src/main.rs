@@ -10,6 +10,12 @@ pub struct ItemProps {
     pub current: u32,
 }
 
+impl Default for ItemProps {
+    fn default() -> Self {
+        return Self { current: 0 };
+    }
+}
+
 #[function_component(Item)]
 pub fn item(props: &ItemProps) -> Html {
     return html! {
