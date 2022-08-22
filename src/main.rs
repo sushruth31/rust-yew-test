@@ -5,56 +5,127 @@ use web_sys::{EventTarget, HtmlInputElement};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-#[derive(Clone, PartialEq, Properties)]
-pub struct ItemProps {
-    pub current: u32,
+#[derive(Clone, Routable, PartialEq)]
+enum Route {
+    #[at("/")]
+    Home,
+    #[at("/modal")]
+    Modal,
+    #[not_found]
+    #[at("/404")]
+    NotFound,
 }
 
-impl Default for ItemProps {
-    fn default() -> Self {
-        return Self { current: 0 };
+#[function_component(NavItems)]
+pub fn nav_items() -> Html {
+    let navigator = use_navigator().unwrap();
+
+    let go_home_button = {
+        let navigator = navigator.clone();
+        let onclick = Callback::from(move |_| navigator.push(&Route::Home));
+        html! {
+            <button {onclick}>{"click to go home"}</button>
+        }
+    };
+
+    let go_to_secure_button = {
+        let onclick = Callback::from(move |_| navigator.push(&Route::Modal));
+        html! {
+            <button {onclick}>{"click to go to secure"}</button>
+        }
+    };
+
+    html! {
+        <>
+            {go_home_button}
+            {go_to_secure_button}
+        </>
     }
 }
 
-#[function_component(Item)]
-pub fn item(props: &ItemProps) -> Html {
-    return html! {
-        <><h1>{props.current}</h1></>
-    };
+#[function_component(Modal)]
+fn modal() -> Html {
+    let modal_state: UseStateHandle<bool> = use_state(|| false);
+    let modal = *modal_state;
+
+    html! {
+        <div>
+            <h3>{ "Modal" }</h3>
+            if modal {
+                <div>{"this is the modal!"}</div>
+            }
+            <button onclick={move |_| modal_state.set(!modal)}>{"toggle"}</button>
+        </div>
+    }
 }
 
-#[function_component(App)]
-pub fn app() -> Html {
-    let render_count: UseStateHandle<u32> = use_state(|| 0);
-    let count = *render_count;
-    let render_input: UseStateHandle<String> = use_state(String::default);
-    let input = (*render_input).clone();
-    let interval: u32 = 1000;
-    use_effect_with_deps(
-        move |_| {
-            let handle = Timeout::new(interval, move || render_count.set(count + 1));
-            return move || {
-                handle.cancel();
-            };
-        },
-        count,
-    );
-    return html! {
-        <>
-            <h1>{"Welcome To The Rust App"}</h1>
-            <Item current={count}/>
-            <div>{input}</div>
-            <input onchange={move |e: Event| {
+#[function_component(Home)]
+fn home() -> Html {
+    let render_list: UseStateHandle<Vec<String>> = use_state(|| vec![String::from("hello")]);
+    let input_value_handle: UseStateHandle<String> = use_state(String::default);
+    let items = render_list.iter().map(|item| {
+        return html! {
+            <li>{item}</li>
+        };
+    });
+    let onchange = {
+        let input_value = input_value_handle.clone();
+        Callback::from(move |e: Event| {
             let target: Option<EventTarget> = e.target();
-            let inputval = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
-            if let Some(v) = inputval {
-                render_input.set(v.value());
+            let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+            if let Some(v) = input {
+                input_value.set(v.value());
             }
-            }}/>
-            </>
+        })
     };
+
+    let add_item = {
+        let input_value_handle = input_value_handle.clone();
+        let list = render_list.clone();
+        Callback::from(move |_| {
+            let mut vec: Vec<String> = list.to_vec();
+            let val: String = String::from(input_value_handle.as_str());
+            if val.is_empty() {
+                return;
+            }
+            vec.push(val);
+            list.set(vec);
+        })
+    };
+
+    html! {
+        <>
+            <div>{"this is the todolist"}</div>
+            <input {onchange} type="text"/>
+            <button onclick={add_item}>{"add item"}</button>
+            {for items}
+        </>
+    }
 }
+
+fn switch(routes: Route) -> Html {
+    match routes {
+        Route::Home => html! {<Home />},
+        Route::Modal => html! {
+            <Modal />
+        },
+        Route::NotFound => html! { <h1>{ "404" }</h1> },
+    }
+}
+
+#[function_component(Main)]
+fn app() -> Html {
+    html! {
+        <>
+            <h1>{"Welcome to Rust Web App!"}</h1>
+            <BrowserRouter>
+            <NavItems />
+            <Switch<Route> render={switch} />
+            </BrowserRouter>
+            </>
+    }
+}
+
 fn main() {
-    wasm_logger::init(wasm_logger::Config::default());
-    yew::Renderer::<App>::new().render();
+    yew::Renderer::<Main>::new().render();
 }
