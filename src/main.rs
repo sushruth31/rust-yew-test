@@ -1,7 +1,8 @@
 use gloo::timers::callback::Timeout;
+use gloo_console::{console, log};
 use wasm_bindgen::JsCast;
 use wasm_logger;
-use web_sys::{EventTarget, HtmlInputElement};
+use web_sys::{EventTarget, HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -59,13 +60,39 @@ fn modal() -> Html {
     }
 }
 
+#[derive(Properties, PartialEq)]
+pub struct ItemProps {
+    pub cb: Callback<MouseEvent>,
+    pub label: String,
+}
+
+#[function_component(Item)]
+fn item(props: &ItemProps) -> Html {
+    return html! {
+        <li onclick={props.cb.clone()}>{props.label.clone()}</li>
+    };
+}
+
 #[function_component(Home)]
 fn home() -> Html {
-    let render_list: UseStateHandle<Vec<String>> = use_state(|| vec![String::from("hello")]);
-    let input_value_handle: UseStateHandle<String> = use_state(String::default);
+    let render_list: UseStateHandle<Vec<String>> = use_state(|| vec!["hello".to_string()]);
+    let input_value_handle: UseStateHandle<AttrValue> = use_state(AttrValue::default);
+    let selected_item: UseStateHandle<AttrValue> = use_state(AttrValue::default);
+
     let items = render_list.iter().map(|item| {
+        let selected = selected_item.clone();
+        let cb = Callback::from(move |e: MouseEvent| {
+            if let Some(target) = e.target().and_then(|event_target: web_sys::EventTarget| {
+                event_target.dyn_into::<web_sys::Element>().ok()
+            }) {
+                let text = target.inner_html();
+                selected.set(AttrValue::from(text));
+            }
+        });
         return html! {
-            <li>{item}</li>
+            <>
+                <Item {cb} label={item.to_string()}  />
+                </>
         };
     });
     let onchange = {
@@ -74,7 +101,7 @@ fn home() -> Html {
             let target: Option<EventTarget> = e.target();
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(v) = input {
-                input_value.set(v.value());
+                input_value.set(AttrValue::from(v.value()));
             }
         })
     };
@@ -83,11 +110,8 @@ fn home() -> Html {
         let input_value_handle = input_value_handle.clone();
         let list = render_list.clone();
         Callback::from(move |_| {
-            let mut vec: Vec<String> = list.to_vec();
-            let val: String = String::from(input_value_handle.as_str());
-            if val.is_empty() {
-                return;
-            }
+            let mut vec = (*list).clone();
+            let val: String = (*input_value_handle).to_string();
             vec.push(val);
             list.set(vec);
         })
@@ -96,6 +120,7 @@ fn home() -> Html {
     html! {
         <>
             <div>{"this is the todolist"}</div>
+            <div>{"The selected item is"} {" "} {selected_item.to_string()}</div>
             <input {onchange} type="text"/>
             <button onclick={add_item}>{"add item"}</button>
             {for items}
