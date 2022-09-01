@@ -2,9 +2,9 @@ use gloo::timers::callback::Timeout;
 use gloo_console::{console, log};
 use wasm_bindgen::JsCast;
 use wasm_logger;
-use web_sys::{EventTarget, HtmlElement, HtmlInputElement};
+use web_sys::{EventTarget, HtmlElement, HtmlInputElement, UrlSearchParams};
 use yew::prelude::*;
-use yew_router::prelude::*;
+use yew_router::{prelude::*, switch::_SwitchProps::render};
 
 #[derive(Clone, Routable, PartialEq)]
 enum Route {
@@ -63,19 +63,32 @@ fn modal() -> Html {
 #[derive(Properties, PartialEq)]
 pub struct ItemProps {
     pub cb: Callback<MouseEvent>,
-    pub label: String,
+    pub status: Status,
+    pub text: String,
 }
 
 #[function_component(Item)]
 fn item(props: &ItemProps) -> Html {
     return html! {
-        <li onclick={props.cb.clone()}>{props.label.clone()}</li>
+        <li onclick={props.cb.clone()}>{props.text.clone()}</li>
     };
+}
+
+#[derive(Clone, PartialEq)]
+pub enum Status {
+    Done,
+    NotDone,
+}
+
+#[derive(Clone)]
+pub struct ListData {
+    pub status: Status,
+    pub text: String,
 }
 
 #[function_component(Home)]
 fn home() -> Html {
-    let render_list: UseStateHandle<Vec<String>> = use_state(|| vec!["hello".to_string()]);
+    let render_list: UseStateHandle<Vec<ListData>> = use_state(|| Vec::new());
     let input_value_handle: UseStateHandle<AttrValue> = use_state(AttrValue::default);
     let selected_item: UseStateHandle<AttrValue> = use_state(AttrValue::default);
 
@@ -85,6 +98,23 @@ fn home() -> Html {
             if !selected_item.is_empty() {
                 selected_item.set(AttrValue::from(""));
             }
+        })
+    };
+
+    let add_item = {
+        let text = input_value_handle.clone();
+        let list = render_list.clone();
+        Callback::from(move |e: MouseEvent| {
+            if text.is_empty() {
+                return;
+            }
+            let mut list_copy = (*list).clone();
+            list_copy.push(ListData {
+                status: Status::NotDone,
+                text: text.to_string(),
+            });
+            list.set(list_copy);
+            text.set(AttrValue::from(""));
         })
     };
 
@@ -100,7 +130,7 @@ fn home() -> Html {
         });
         return html! {
             <>
-                <Item {cb} label={item.to_string()}  />
+                <Item {cb} status={item.status.to_owned()} text={item.text.to_string()} />
                 </>
         };
     });
@@ -112,17 +142,6 @@ fn home() -> Html {
             if let Some(v) = input {
                 input_value.set(AttrValue::from(v.value()));
             }
-        })
-    };
-
-    let add_item = {
-        let input_value_handle = input_value_handle.clone();
-        let list = render_list.clone();
-        Callback::from(move |_| {
-            let mut vec = (*list).clone();
-            let val: String = (*input_value_handle).to_string();
-            vec.push(val);
-            list.set(vec);
         })
     };
 
