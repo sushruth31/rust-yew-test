@@ -79,6 +79,15 @@ fn home() -> Html {
     let input_value_handle: UseStateHandle<AttrValue> = use_state(AttrValue::default);
     let selected_item: UseStateHandle<AttrValue> = use_state(AttrValue::default);
 
+    let on_delete = {
+        let selected_item = selected_item.clone();
+        Callback::from(move |e: MouseEvent| {
+            if !selected_item.is_empty() {
+                selected_item.set(AttrValue::from(""));
+            }
+        })
+    };
+
     let items = render_list.iter().map(|item| {
         let selected = selected_item.clone();
         let cb = Callback::from(move |e: MouseEvent| {
@@ -123,6 +132,7 @@ fn home() -> Html {
             <div>{"The selected item is"} {" "} {selected_item.to_string()}</div>
             <input {onchange} type="text"/>
             <button onclick={add_item}>{"add item"}</button>
+            <button onclick={on_delete}>{"remove item"}</button>
             {for items}
         </>
     }
