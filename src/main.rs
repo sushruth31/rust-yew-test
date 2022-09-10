@@ -4,45 +4,11 @@ use wasm_bindgen::JsCast;
 use wasm_logger;
 use web_sys::{EventTarget, HtmlElement, HtmlInputElement, UrlSearchParams};
 use yew::prelude::*;
-use yew_router::{prelude::*, switch::_SwitchProps::render};
-
-#[derive(Clone, Routable, PartialEq)]
-enum Route {
-    #[at("/")]
-    Home,
-    #[at("/modal")]
-    Modal,
-    #[not_found]
-    #[at("/404")]
-    NotFound,
-}
-
-#[function_component(NavItems)]
-pub fn nav_items() -> Html {
-    let navigator = use_navigator().unwrap();
-
-    let go_home_button = {
-        let navigator = navigator.clone();
-        let onclick = Callback::from(move |_| navigator.push(&Route::Home));
-        html! {
-            <button {onclick}>{"click to go home"}</button>
-        }
-    };
-
-    let go_to_secure_button = {
-        let onclick = Callback::from(move |_| navigator.push(&Route::Modal));
-        html! {
-            <button {onclick}>{"click to go to secure"}</button>
-        }
-    };
-
-    html! {
-        <>
-            {go_home_button}
-            {go_to_secure_button}
-        </>
-    }
-}
+use yew_app::navbar::NavBar;
+use yew_app::pokemon::Pokemon;
+use yew_app::route::Route;
+use yew_hooks::prelude::*;
+use yew_router::{navigator, prelude::*, switch::_SwitchProps::render};
 
 #[function_component(Modal)]
 fn modal() -> Html {
@@ -163,6 +129,9 @@ fn switch(routes: Route) -> Html {
         Route::Modal => html! {
             <Modal />
         },
+        Route::Pokemon => html! {
+            <Pokemon />
+        },
         Route::NotFound => html! { <h1>{ "404" }</h1> },
     }
 }
@@ -173,7 +142,7 @@ fn app() -> Html {
         <>
             <h1>{"Welcome to Rust Web App!"}</h1>
             <BrowserRouter>
-            <NavItems />
+            <NavBar />
             <Switch<Route> render={switch} />
             </BrowserRouter>
             </>
