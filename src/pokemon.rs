@@ -4,9 +4,11 @@ use reqwest;
 use serde_json::Value;
 use wasm_bindgen_futures;
 use wasm_logger;
+use web_sys::console;
 use yew::prelude::*;
 use yew_router::{navigator, prelude::*, switch::_SwitchProps::render};
 
+#[derive(Debug, Properties, PartialEq)]
 pub struct PokemonData {
     name: String,
     img_src: String,
@@ -15,7 +17,7 @@ pub struct PokemonData {
 #[function_component(Pokemon)]
 pub fn pokemon() -> Html {
     let pokemon: UseStateHandle<Option<PokemonData>> = use_state(|| None);
-    web_sys::console::log_1!(&format!("{:?}", pokemon.into()));
+    console::log_1(&format!("{:?}", pokemon).into());
     let onclick = Callback::from(move |e: MouseEvent| {
         let pokemon_state = pokemon.clone();
         wasm_bindgen_futures::spawn_local(async move {
