@@ -21,7 +21,7 @@ pub fn pokemon() -> Html {
     let loading: UseStateHandle<bool> = use_state(|| false);
     let loading_copy = loading.clone();
     let pokemon_copy = pokemon.clone();
-    //console::log_1(&format!("{:?}", pokemon).into());
+    //console::log_1(&format!("{pokemon:#?}").into());
     let onclick = Callback::from(move |e: MouseEvent| {
         let pokemon_state = pokemon.clone();
         let loading = loading.clone();
