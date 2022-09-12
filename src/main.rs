@@ -96,7 +96,7 @@ fn home() -> Html {
         });
         return html! {
             <>
-                <Item {cb} status={item.status.to_owned()} text={item.text.to_string()} />
+                <Item {cb} status={item.status.clone()} text={item.text.clone()} />
                 </>
         };
     });
