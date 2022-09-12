@@ -99,7 +99,7 @@ pub fn pokemon_view(props: &PokemonViewProps) -> Html {
             let pokemon_copy = pokemon.clone();
             let ondelete = props.ondelete.clone();
             let onclick = Callback::from(move |e: MouseEvent| {
-                let name = pokemon_copy.name.to_string();
+                let name = pokemon_copy.name.to_owned();
                 ondelete.emit(name);
             });
             return html! {
