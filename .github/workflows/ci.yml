@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  # Non-secret build-time config; build.rs refuses to build without it.
+  POKEAPI_BASE_URL: https://pokeapi.co/api/v2
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+
+      - name: format
+        run: cargo fmt --all -- --check
+
+      - name: lint (host)
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: test (host)
+        run: cargo test
+
+      - name: lint (wasm view layer)
+        run: cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
+
+      - name: build (wasm)
+        run: cargo build --release --target wasm32-unknown-unknown
