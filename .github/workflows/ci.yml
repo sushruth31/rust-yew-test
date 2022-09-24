@@ -7,8 +7,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  # Non-secret build-time config; build.rs refuses to build without it.
-  POKEAPI_BASE_URL: https://pokeapi.co/api/v2
+  # POKEAPI_BASE_URL is deliberately not set here: CI should build the way a fresh
+  # clone does, which means exercising the default in build.rs.
 
 jobs:
   check:

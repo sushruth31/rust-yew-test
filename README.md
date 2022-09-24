@@ -24,9 +24,6 @@ plain, host-testable Rust while `wasm32` stays a thin rendering shell.
 rustup target add wasm32-unknown-unknown
 cargo install trunk
 
-cp .env.example .env
-set -a && . ./.env && set +a     # POKEAPI_BASE_URL; the build fails without it
-
 trunk serve                      # http://127.0.0.1:8080
 trunk build --release            # -> dist/
 ```
@@ -82,10 +79,13 @@ cargo test
   back-sprite → front-sprite → `PokeError::NoSprite`, and the page renders a `Failed`
   state. Every fallible step in the fetch path is a `?`, not an `unwrap`.
 - **Configuration is resolved at build time because wasm has no process environment.**
-  `build.rs` reads `POKEAPI_BASE_URL`, rejects anything that is not an absolute http(s)
-  URL, strips a trailing slash and re-exports it via `cargo:rustc-env`. Missing config
-  fails the build naming the variable, rather than shipping a bundle that fetches from
-  `undefined/pokemon/42`.
+  `build.rs` reads `POKEAPI_BASE_URL`, strips a trailing slash and re-exports it via
+  `cargo:rustc-env`. PokeAPI is public and keyless, so the default is the real service
+  and a clean clone builds with no setup — gating the build on a variable that has one
+  correct public value buys nothing. An override *is* validated: anything that is not
+  an absolute http(s) URL fails the build naming the variable, rather than shipping a
+  bundle that fetches from `undefined/pokemon/42`. Copy `.env.example` to point it at a
+  local mirror.
 - **Releasing a pokémon is positional, not by name.** Drawing from a 151-wide dex, the
   chance of a duplicate species passes 50 % by the fifteenth catch (birthday problem);
   the original `filter(|p| p.name != name)` deleted both copies. Elsewhere `toggle` and
